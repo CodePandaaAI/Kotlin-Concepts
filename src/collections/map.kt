@@ -21,4 +21,11 @@ fun main() {
         studentMarks[updateStudent] = updatedMarks
     }
 
+    val deleteStudent = "Priya"
+    if(studentMarks.containsKey(deleteStudent)){
+        studentMarks.remove(deleteStudent)
+        println("After Deleting Student $deleteStudent")
+        println(studentMarks)
+    }
+
 }
