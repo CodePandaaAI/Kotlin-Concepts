@@ -30,7 +30,7 @@ fun main() {
     
     // Create an error result that contains Nothing
     // Nothing means "no value" - perfect for errors!
-    val error: NetworkResult<Nothing> = NetworkResult.Error("Failed")
+    val error: NetworkResultt<Nothing> = NetworkResultt.Error("Failed")
     
     // ============================================
     // THE MAGIC: Nothing allows universal assignment
@@ -39,9 +39,9 @@ fun main() {
     // NetworkResult<Nothing> can be assigned to NetworkResult<AnyType>
     
     // Can be used as any NetworkResult type:
-    val intResult: NetworkResult<Int> = error      // ✅ Works!
-    val stringResult: NetworkResult<String> = error // ✅ Works!
-    val anyResult: NetworkResult<Any> = error      // ✅ Works!
+    val intResult: NetworkResultt<Int> = error      // ✅ Works!
+    val stringResult: NetworkResultt<String> = error // ✅ Works!
+    val anyResult: NetworkResultt<Any> = error      // ✅ Works!
     
     println("Error result: $intResult")
     
@@ -83,7 +83,7 @@ fun main() {
  * - Error can be used with any NetworkResult type
  * - Type-safe error handling
  */
-sealed interface NetworkResult<out T> {
+sealed interface NetworkResultt<out T> {
     /**
      * SUCCESS CASE
      * ------------
@@ -92,7 +92,7 @@ sealed interface NetworkResult<out T> {
      * Example: Success(42) → NetworkResult<Int>
      *          Success("hello") → NetworkResult<String>
      */
-    data class Success<T>(val data: T) : NetworkResult<T>
+    data class Success<T>(val data: T) : NetworkResultt<T>
     
     /**
      * ERROR CASE
@@ -108,7 +108,7 @@ sealed interface NetworkResult<out T> {
      *   NetworkResult.Error("Failed") → NetworkResult<Nothing>
      *   But can be used as NetworkResult<Int>, NetworkResult<String>, etc.
      */
-    data class Error(val message: String) : NetworkResult<Nothing>
+    data class Error(val message: String) : NetworkResultt<Nothing>
 }
 
 /**

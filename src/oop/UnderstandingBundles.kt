@@ -104,7 +104,9 @@ fun interceptData(bundle: Map<String, Any>) {
     // The ContentResolver looks for the specific standardized keys it knows about
     // In real Android code, this would be:
     //   val selection = bundle.getString(ContentResolver.QUERY_ARG_SQL_SELECTION)
+    val selectionKey = ""
     val specialInstructions = bundle[selectionKey] as String?
+    val queryArgLimitKey = ""
     val howMany = bundle[queryArgLimitKey] as Int?
     
     println("Customer wants exactly: $howMany items")
