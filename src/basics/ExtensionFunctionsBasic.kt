@@ -15,9 +15,7 @@ package basics
  * fun ReceiverType.functionName(): ReturnType { ... }
  *      ^            ^
  *      |            |
- *   The class   The new function
- *   you're      you're adding
- *   extending
+ *   The class      The new function you're you're adding extending the class object
  * 
  * WHY USE EXTENSION FUNCTIONS?
  * ----------------------------
