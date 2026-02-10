@@ -54,10 +54,14 @@ enum class Biome {
 }
 
 class Creatures {
-    var creaturesMap: MutableMap<CreatureType, Int> = mutableMapOf()
+    private var creaturesMap: MutableMap<CreatureType, Int> = mutableMapOf()
 
     fun add(creatureType: CreatureType, count: Int) {
         creaturesMap[creatureType] = count
+    }
+
+    override fun toString(): String {
+        return creaturesMap.toString()
     }
 }
 
@@ -86,7 +90,7 @@ class World {
         return """
             |Environment: (Gravity: ${myWorld.environment.gravity}, Atmosphere: ${myWorld.environment.atmosphere})
             |Geography: (Biome: ${myWorld.geography.biome}, Ocean Level: ${myWorld.geography.oceanLevel})
-            |Creatures: ${myWorld.creatures.creaturesMap}
+            |Creatures: ${myWorld.creatures}
         """.trimIndent()
     }
 }
