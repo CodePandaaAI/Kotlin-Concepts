@@ -1,226 +1,177 @@
 package dsl
 
-/**
- * ============================================
- * KOTLIN CONCEPT: DSL WITH ENUMS
- * ============================================
- * 
- * This demonstrates combining DSLs with enums for
- * type-safe configuration. Enums provide:
- * - Limited, valid options
- * - Type safety
- * - Clear API
- * 
- * USE CASE:
- * ---------
- * Configuring a product (like a phone) with specific
- * models, specifications, and colors. Using enums
- * ensures only valid combinations are possible.
- */
+// ============================================
+//  KOTLIN CONCEPT: DSL WITH ENUMS
+// ============================================
+//
+//  DSLs let you write configuration-like code.
+//  But what if someone writes:
+//
+//    choosePhone {
+//        model = "iPhone 47 Ultra Pro Max Plus"  // ← Not a real model!
+//        color = "rainbow sparkle"               // ← Not a real color!
+//    }
+//
+//  With Strings, ANYTHING goes. No compiler safety.
+//  With ENUMS, only VALID options compile:
+//
+//    choosePhone {
+//        model = PhoneModel.FIND_X9_PRO         // ✅ Must pick from the enum
+//        color = PhoneColor.MIDNIGHT_BLACK       // ✅ Must pick from the enum
+//    }
+//
+//  Enums + DSLs = type-safe configuration.
 
 fun main() {
+
     // ============================================
-    // CONFIGURING A PHONE WITH DSL
+    //  STEP 1: TYPE-SAFE PHONE CONFIGURATION
     // ============================================
-    
-    val oppoPhone = choosePhoneSpecs {
-        model = OppoFindX9Models.FindX9Pro
-        ramAndStorageSpecsCombination = RamAndStorageSpecsCombination.HIGH
-        color = MobileColor.LunarRed
+
+    val myPhone = configurePhone {
+        model = PhoneModel.FIND_X9_PRO
+        color = PhoneColor.MIDNIGHT_BLACK
+        storage = StorageSize.GB_256
+        accessories {
+            add(Accessory.CASE)
+            add(Accessory.SCREEN_PROTECTOR)
+        }
     }
-    
-    println("Configured Phone:")
-    println(oppoPhone)
-    println()
-    
+
+    println(myPhone)
+
+    // Try changing PhoneModel to something that doesn't exist:
+    //   model = PhoneModel.GALAXY_S99  // ❌ COMPILE ERROR!
+    //   model = "My Dream Phone"        // ❌ COMPILE ERROR! (wrong type)
+    //
+    // Only the options in the enum are allowed. Safe!
+
+
+
     // ============================================
-    // TYPE SAFETY BENEFIT
+    //  STEP 2: ANOTHER CONFIGURATION
     // ============================================
-    // Try uncommenting these to see compile errors:
-    // model = "Invalid Model"  // ❌ Compile error: String is not OppoFindX9Models
-    // color = "Red"            // ❌ Compile error: String is not MobileColor
-    
-    // Enums ensure only valid values can be assigned!
+
+    val budgetPhone = configurePhone {
+        model = PhoneModel.RENO_12
+        color = PhoneColor.OCEAN_BLUE
+        storage = StorageSize.GB_128
+        // No accessories — keep it simple
+    }
+
+    println(budgetPhone)
 }
 
-/**
- * PHONE SPECIFICATION BUILDER FUNCTION
- * -------------------------------------
- * 
- * This is the DSL entry point for configuring a phone.
- * 
- * fun choosePhoneSpecs(specs: Mobile.() -> Unit): Mobile
- *                          ^
- *                          |
- *                  Lambda with receiver
- * 
- * The lambda has Mobile as receiver, so inside { } you're
- * working directly with Mobile properties.
- */
-fun choosePhoneSpecs(specs: Mobile.() -> Unit): Mobile {
-    val smartPhone = Mobile()
-    smartPhone.specs()  // Configure using the lambda
-    return smartPhone
+
+// ============================================
+//  ENUMS: THE VALID OPTIONS
+// ============================================
+//
+//  Enums are a FIXED SET of options:
+//    "These are the ONLY valid values. Nothing else."
+//
+//  Like a dropdown menu vs a text field:
+//    Dropdown: [Option 1] [Option 2] [Option 3]  ← can't type random stuff
+//    Text field: [______________]                 ← can type anything
+
+enum class PhoneModel(val displayName: String) {
+    FIND_X9("Find X9"),
+    FIND_X9_PRO("Find X9 Pro"),
+    RENO_12("Reno 12"),
+    RENO_12_PRO("Reno 12 Pro")
 }
 
-/**
- * MOBILE PHONE CLASS
- * ------------------
- * 
- * Represents a mobile phone with configurable specifications.
- * Properties use enum types for type safety.
- */
-class Mobile {
-    val name = "Oppo Find X9 Series"
-    
-    /**
-     * MODEL PROPERTY
-     * --------------
-     * Uses enum to ensure only valid models can be assigned.
-     */
-    var model: OppoFindX9Models = OppoFindX9Models.None
-    
-    /**
-     * RAM AND STORAGE COMBINATION
-     * ----------------------------
-     * Uses enum with associated values (ram and storage amounts).
-     */
-    var ramAndStorageSpecsCombination: RamAndStorageSpecsCombination = RamAndStorageSpecsCombination.None
-    
-    /**
-     * COLOR PROPERTY
-     * --------------
-     * Uses enum for available colors.
-     */
-    var color = MobileColor.None
-    
+enum class PhoneColor(val hex: String) {
+    MIDNIGHT_BLACK("#1a1a1a"),
+    OCEAN_BLUE("#0066cc"),
+    SUNSET_GOLD("#ffcc00"),
+    PEARL_WHITE("#f5f5f5")
+}
+
+enum class StorageSize(val gb: Int) {
+    GB_128(128),
+    GB_256(256),
+    GB_512(512)
+}
+
+enum class Accessory {
+    CASE, SCREEN_PROTECTOR, CHARGER, EARBUDS
+}
+
+
+// ============================================
+//  BUILDER CLASS
+// ============================================
+
+class PhoneConfig {
+    var model: PhoneModel = PhoneModel.FIND_X9
+    var color: PhoneColor = PhoneColor.MIDNIGHT_BLACK
+    var storage: StorageSize = StorageSize.GB_128
+    private val accessoryList = mutableListOf<Accessory>()
+
+    fun accessories(block: AccessoryBuilder.() -> Unit) {
+        val builder = AccessoryBuilder()
+        builder.block()
+        accessoryList.addAll(builder.getAll())
+    }
+
     override fun toString(): String {
+        val accStr = if (accessoryList.isEmpty()) "none" else accessoryList.joinToString(", ")
         return """
-            |$name
-            |Model: $model
-            |Mobile Specs: $ramAndStorageSpecsCombination
-            |Mobile Color: $color
+            |📱 Phone Order:
+            |   Model:    ${model.displayName}
+            |   Color:    ${color.name.replace("_", " ")} (${color.hex})
+            |   Storage:  ${storage.gb}GB
+            |   Extras:   $accStr
         """.trimMargin()
     }
 }
 
-/**
- * PHONE MODEL ENUM
- * ----------------
- * 
- * Defines available phone models.
- * Using enum ensures only these models are valid.
- */
-enum class OppoFindX9Models {
-    FindX9,
-    FindX9Pro,
-    None  // Default/unselected state
+class AccessoryBuilder {
+    private val list = mutableListOf<Accessory>()
+    fun add(accessory: Accessory) { list.add(accessory) }
+    fun getAll(): List<Accessory> = list
 }
 
-/**
- * RAM AND STORAGE SPECS ENUM
- * ---------------------------
- * 
- * ENUMS WITH VALUES:
- * ------------------
- * This enum demonstrates enums with associated values.
- * Each variant can hold data (ram and storage amounts).
- * 
- * SYNTAX:
- * -------
- * BASE(8, 256) means BASE variant with ram=8GB, storage=256GB
- * 
- * BENEFITS:
- * ---------
- * - Type-safe combinations
- * - Data associated with each option
- * - Can access values: BASE.ram, BASE.storage
- */
-enum class RamAndStorageSpecsCombination(
-    val ram: Int? = null,
-    val storage: Int? = null
-) {
-    BASE(8, 256),      // 8GB RAM, 256GB Storage
-    MEDIUM(12, 256),   // 12GB RAM, 256GB Storage
-    HIGH(16, 512),     // 16GB RAM, 512GB Storage
-    None;              // Default/unselected state
-    
-    /**
-     * CUSTOM toString()
-     * -----------------
-     * Provides a readable string representation.
-     * Handles the None case specially.
-     */
-    override fun toString(): String {
-        return if (ram != null && storage != null) {
-            "${ram}GB RAM, ${storage}GB Storage"
-        } else {
-            "None"
-        }
-    }
+
+// ============================================
+//  DSL ENTRY POINT
+// ============================================
+//
+//  Same pattern as makeSandwich:
+//    1. Create empty config
+//    2. Run the lambda ON it (lambda with receiver)
+//    3. Return the configured object
+
+fun configurePhone(block: PhoneConfig.() -> Unit): PhoneConfig {
+    val config = PhoneConfig()
+    config.block()
+    return config
 }
 
-/**
- * MOBILE COLOR ENUM
- * -----------------
- * 
- * Simple enum for available colors.
- */
-enum class MobileColor {
-    White,
-    Black,
-    FlowPurple,
-    LunarRed,
-    None  // Default/unselected state
-}
 
-/**
- * ============================================
- * WHY COMBINE DSLs WITH ENUMS?
- * ============================================
- * 
- * 1. TYPE SAFETY:
- *    - Compiler prevents invalid values
- *    - No typos or invalid strings
- *    - IDE autocomplete shows all options
- * 
- * 2. READABILITY:
- *    - Code reads naturally
- *    - Clear what options are available
- *    - Self-documenting
- * 
- * 3. MAINTAINABILITY:
- *    - Add new options by adding enum values
- *    - Compiler ensures all cases are handled
- *    - Refactoring is safer
- * 
- * 4. RUNTIME SAFETY:
- *    - No need to validate strings
- *    - Enum values are guaranteed valid
- *    - Can use exhaustive when expressions
- * 
- * ============================================
- * REAL-WORLD EXAMPLES
- * ============================================
- * 
- * 1. GRADLE BUILD SCRIPTS:
- *    android {
- *        buildTypes {
- *            release { ... }
- *            debug { ... }
- *        }
- *    }
- * 
- * 2. DATABASE SCHEMAS:
- *    table("users") {
- *        column("id", INTEGER)
- *        column("name", VARCHAR(255))
- *    }
- * 
- * 3. API CLIENT CONFIGURATION:
- *    apiClient {
- *        environment = Environment.PRODUCTION
- *        timeout = Timeout.SHORT
- *    }
- */
-
+// ============================================
+//  "BUT WAIT..." — COMMON QUESTIONS
+// ============================================
+//
+//  Q: "Why not just use Strings with validation?"
+//
+//  A: With Strings, errors happen at RUNTIME (crashes in production).
+//     With Enums, errors happen at COMPILE TIME (red squiggles in your IDE).
+//     Compile-time > runtime, always.
+//
+//
+//  Q: "Can enums have methods and properties?"
+//
+//  A: Yes! Each enum value can have data:
+//       enum class PhoneModel(val displayName: String) {
+//           FIND_X9_PRO("Find X9 Pro")  ← displayName = "Find X9 Pro"
+//       }
+//     You can also add methods to the enum class itself.
+//
+//
+//  Q: "What if I need to add new options later?"
+//
+//  A: Just add them to the enum. Existing code keeps working.
+//     If you use 'when' on the enum, the compiler will warn you
+//     about unhandled new values (if it's exhaustive).

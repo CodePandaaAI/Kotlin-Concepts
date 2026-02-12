@@ -1,104 +1,190 @@
 package basics
 
-/**
- * ============================================
- * KOTLIN CONCEPT: EXTENSION FUNCTIONS (BASIC)
- * ============================================
- * 
- * WHAT ARE EXTENSION FUNCTIONS?
- * -----------------------------
- * Extension functions allow you to add new functions to existing classes
- * WITHOUT modifying their source code. It's like adding methods to classes
- * you don't own (like String, List, etc.).
- * 
- * SYNTAX:
- * fun ReceiverType.functionName(): ReturnType { ... }
- *      ^            ^
- *      |            |
- *   The class      The new function you're you're adding extending the class object
- * 
- * WHY USE EXTENSION FUNCTIONS?
- * ----------------------------
- * 1. Readability: Makes code read more naturally
- * 2. Organization: Group related functionality together
- * 3. No Inheritance: Add functionality without subclassing
- * 4. Null Safety: Can be called on nullable types safely
- */
+// ============================================
+//  KOTLIN CONCEPT: EXTENSION FUNCTIONS
+// ============================================
+//
+//  Imagine you're using the String class.
+//  You wish it had a method called .shout() that returns "HELLO!!!"
+//
+//  But String is built into Kotlin. You can't edit it.
+//  You don't own the source code.
+//
+//  Extension functions let you ADD methods to any class
+//  without modifying the class itself.
+//
+//  It's like giving a tool to someone without opening their toolbox.
 
 fun main() {
-    val text = "hello world"
-    
+
     // ============================================
-    // COMPARISON: Normal Function vs Extension Function
+    //  STEP 1: THE PROBLEM (Normal Functions)
     // ============================================
-    
-    // NORMAL FUNCTION CALL:
-    // - Function name comes first
-    // - Object is passed as parameter
-    // - Less natural reading flow
-    println("Normal function: ${addExclamation(text)}")
-    // Reads: "add exclamation to text"
-    
-    // EXTENSION FUNCTION CALL:
-    // - Object comes first
-    // - Function looks like a method
-    // - More natural, reads like English
-    println("Extension function: ${text.addExclamation2()}")
-    // Reads: "text, add exclamation"
-    
+
+    val text = "hello"
+
+    // Normal function approach:
+    val result1 = shout(text)
+    println(result1)  // HELLO!!!
+
+    // This works, but it reads backwards:
+    // "shout the text" instead of "text, shout"
+
+    // What if we could write: text.shout()?
+    // That reads naturally: "text, shout yourself"
+
+
+
     // ============================================
-    // KEY INSIGHT: They're the Same Under the Hood!
+    //  STEP 2: THE SOLUTION (Extension Function)
     // ============================================
-    // Both functions do the same thing, but extension functions
-    // provide better readability and feel more "Kotlin-like"
+
+    val result2 = text.shout()
+    println(result2)  // HELLO!!!
+
+    // Same result! But notice:
+    //   shout(text)    → function-first (less natural)
+    //   text.shout()   → object-first (reads like English!)
+
+    // "text, shout yourself" — much cleaner.
+
+
+
+    // ============================================
+    //  STEP 3: HOW IT WORKS INSIDE
+    // ============================================
+    //
+    //  When you write: text.shout()
+    //  Kotlin secretly converts it to: shout(text)
+    //
+    //  It's SYNTACTIC SUGAR. Same thing, prettier syntax.
+    //
+    //  Inside the extension function, 'this' refers to the object:
+    //    "hello".shout() → this = "hello"
+    //    "world".shout() → this = "world"
+
+
+
+    // ============================================
+    //  STEP 4: MORE EXAMPLES
+    // ============================================
+
+    // Add a method to Int:
+    println(5.isEven())    // true
+    println(7.isEven())    // false
+
+    // Add a method to List:
+    val numbers = listOf(1, 2, 3, 4, 5)
+    println(numbers.secondOrNull())  // 2
+
+    val short = listOf("only one")
+    println(short.secondOrNull())    // null
+
+
+
+    // ============================================
+    //  STEP 5: NULLABLE EXTENSION FUNCTIONS
+    // ============================================
+    //
+    //  You can even extend nullable types!
+
+    val name: String? = null
+    println(name.orDefault("Unknown"))  // Unknown
+
+    val realName: String? = "Alice"
+    println(realName.orDefault("Unknown"))  // Alice
 }
 
-/**
- * NORMAL FUNCTION
- * ---------------
- * This is a regular function that takes a String parameter.
- * 
- * Usage: addExclamation(text)
- *        ^            ^
- *        |            |
- *    function    parameter
- */
-fun addExclamation(s: String): String {
-    return "$s!"
+
+// ============================================
+//  NORMAL FUNCTION (for comparison)
+// ============================================
+//
+//  fun shout(s: String): String
+//
+//  Takes a String. Returns a String.
+//  Called as: shout(text)
+
+fun shout(s: String): String {
+    return s.uppercase() + "!!!"
 }
 
-/**
- * EXTENSION FUNCTION
- * ------------------
- * This adds a new method to the String class.
- * 
- * Syntax breakdown:
- * fun String.addExclamation2(): String
- *     ^     ^                ^
- *     |     |                |
- *     |     |         Return type
- *     |     |
- *     |  Function name
- *     |
- *  Receiver type (the class being extended)
- * 
- * Inside the function:
- * - 'this' refers to the String object the function was called on
- * - In text.addExclamation2(), 'this' = "hello world"
- * 
- * HOW IT WORKS:
- * 1. You call: text.addExclamation2()
- * 2. Kotlin converts it to: addExclamation2(text)
- * 3. The 'this' keyword inside refers to 'text'
- * 
- * IMPORTANT NOTES:
- * - Extension functions are STATIC - they don't have access to private members
- * - They're resolved statically (at compile time), not dynamically (at runtime)
- * - If a class already has a method with the same signature, the class method wins
- */
-fun String.addExclamation2(): String {
-    // 'this' refers to the String instance that called this function
-    // If you called "hello".addExclamation2(), then this = "hello"
-    return "$this!"
+
+// ============================================
+//  EXTENSION FUNCTION
+// ============================================
+//
+//  fun String.shout(): String
+//      ^^^^^^
+//      |
+//   "Receiver type" — the class you're extending
+//
+//  Breakdown:
+//    String     → We're adding this to the String class
+//    .shout()   → The new method name
+//    : String   → It returns a String
+//
+//  Inside the function:
+//    'this' = the String object that called the function
+//    "hello".shout() → this = "hello"
+
+fun String.shout(): String {
+    // 'this' is the string that called .shout()
+    return this.uppercase() + "!!!"
+    // Or just: uppercase() + "!!!"
+    // (you can omit 'this', just like inside a class)
 }
 
+
+// ============================================
+//  MORE EXTENSION FUNCTION EXAMPLES
+// ============================================
+
+// Extend Int:
+fun Int.isEven(): Boolean {
+    return this % 2 == 0
+    // 'this' = the Int that called .isEven()
+    // 5.isEven() → this = 5 → 5 % 2 == 0 → false
+}
+
+// Extend List:
+fun <T> List<T>.secondOrNull(): T? {
+    return if (this.size >= 2) this[1] else null
+    // Generic! Works for List<String>, List<Int>, any List<T>
+}
+
+// Extend NULLABLE type:
+fun String?.orDefault(default: String): String {
+    return this ?: default
+    // If 'this' (the string) is null, return the default.
+    // If not null, return 'this'.
+}
+
+
+// ============================================
+//  "BUT WAIT..." — COMMON QUESTIONS
+// ============================================
+//
+//  Q: "Does this actually modify the String class?"
+//  A: NO! String's source code is untouched.
+//     Extension functions are resolved at COMPILE TIME.
+//     The compiler just converts text.shout() → shout(text).
+//     It's a trick, not a modification.
+//
+//  Q: "Can I access private members of the class?"
+//  A: NO! Extension functions don't have special access.
+//     They can only use public/internal members.
+//     They're "outside" the class, just with nicer syntax.
+//
+//  Q: "What if String already has a method with the same name?"
+//  A: The REAL method wins. Always. Extensions can't override.
+//
+//  Q: "Why not just use normal functions?"
+//  A: Readability! Compare:
+//       shout(capitalize(trim(text)))           ← nested, hard to read
+//       text.trim().capitalize().shout()        ← chained, easy to read
+//
+//     Extension functions enable FLUENT CHAINS.
+//
+//  NEXT STEP: See ../functions/HigherOrderFunctions.kt for
+//  generic extension functions like filter(), map(), etc.

@@ -1,182 +1,215 @@
 package dsl
 
-/**
- * ============================================
- * KOTLIN CONCEPT: KTOR-STYLE DSL
- * ============================================
- * 
- * This demonstrates how frameworks like Ktor use DSLs
- * for configuration. Ktor is a Kotlin web framework that
- * uses DSLs extensively for setting up HTTP clients,
- * servers, and routing.
- * 
- * REAL KTOR EXAMPLE:
- * ------------------
- * val client = HttpClient {
- *     expectSuccess = false
- *     install(Logging) {
- *         level = LogLevel.INFO
- *     }
- * }
- * 
- * This example simulates that pattern to show how it works.
- */
+// ============================================
+//  KOTLIN CONCEPT: KTOR-STYLE DSL
+// ============================================
+//
+//  Ktor is Kotlin's web framework by JetBrains.
+//  It uses DSLs for configuration:
+//
+//    val client = HttpClient {
+//        install(JsonPlugin) {
+//            prettyPrint = true
+//        }
+//        install(LoggingPlugin) {
+//            level = LogLevel.ALL
+//        }
+//    }
+//
+//  This LOOKS like a config file, but it's real Kotlin code.
+//  Each 'install' block is a nested DSL.
+//
+//  Let's build a simplified version of this
+//  to understand how frameworks use DSLs internally.
 
 fun main() {
+
     // ============================================
-    // KTOR-STYLE CLIENT CONFIGURATION
+    //  STEP 1: CONFIGURE AN HTTP CLIENT
     // ============================================
-    
-    val result = HttpClient {
-        // Configure the client
-        expectSuccess = false
-        
-        // Install plugins (Ktor's plugin system)
-        install("Logging") {
-            setting = "verbose"
+
+    val client = createClient {
+        timeout = 30_000        // 30 seconds
+        baseUrl = "https://api.example.com"
+
+        install(JsonPlugin) {
+            prettyPrint = true
+            strictMode = false
         }
-        
-        install("Json") {
-            setting = "kotlinx.serialization"
+
+        install(LoggingPlugin) {
+            level = LogLevel.HEADERS
+            logBody = true
         }
     }
-    
-    println(result)
+
+    println(client)
+
+    // This reads like a configuration file!
+    // But every line is a real Kotlin expression.
+    // The compiler checks everything at compile time.
+
+
+
+    // ============================================
+    //  STEP 2: HOW install() WORKS
+    // ============================================
+    //
+    //  install(JsonPlugin) { prettyPrint = true }
+    //
+    //  Broken down:
+    //    install       → function on ClientBuilder (via 'this')
+    //    JsonPlugin    → a COMPANION OBJECT that has a configure() method
+    //    { ... }       → lambda that sets up the plugin's config
+    //
+    //  Inside install():
+    //    1. Get the plugin's config object
+    //    2. Run the lambda ON that config (lambda with receiver)
+    //    3. Store the configured plugin
 }
 
-/**
- * HTTP CLIENT CONFIGURATION CLASS
- * --------------------------------
- * 
- * This represents the configuration for an HTTP client.
- * In real Ktor, this would have many more options.
- */
-class HttpClientConfig {
-    var expectSuccess: Boolean = true
-    private val plugins = mutableListOf<String>()
-    
+
+// ============================================
+//  DSL ENTRY POINT
+// ============================================
+
+fun createClient(block: ClientBuilder.() -> Unit): HttpClientConfig {
+    val builder = ClientBuilder()
+    builder.block()
+    return builder.build()
+}
+
+
+// ============================================
+//  CLIENT BUILDER
+// ============================================
+
+class ClientBuilder {
+    var timeout: Long = 10_000
+    var baseUrl: String = ""
+    private val plugins = mutableListOf<PluginInfo>()
+
     /**
-     * INSTALL PLUGIN METHOD
-     * ---------------------
-     * 
-     * This simulates Ktor's plugin installation system.
-     * 
-     * install("PluginName") {
-     *     // Configure plugin
-     * }
-     * 
-     * HOW IT WORKS:
-     * 1. Takes plugin name
-     * 2. Takes a lambda to configure the plugin
-     * 3. Creates PluginConfig
-     * 4. Runs configuration lambda
-     * 5. Stores plugin configuration
-     * 
-     * NESTED DSL PATTERN:
-     * -------------------
-     * This is a nested DSL - the outer DSL (HttpClient { })
-     * contains an inner DSL (install { }).
+     * install(SomePlugin) { ... }
+     *
+     * This function accepts:
+     *   - A plugin definition (companion object implementing PluginFactory)
+     *   - A configuration lambda
+     *
+     * The CONFIG type is determined by the plugin's generic parameter.
      */
-    fun install(name: String, configure: PluginConfig.() -> Unit) {
-        val config = PluginConfig()
-        config.configure()  // Run the configuration lambda
-        plugins.add("$name: ${config.setting}")
-        println("Installed $name with setting: ${config.setting}")
+    fun <CONFIG> install(
+        plugin: PluginFactory<CONFIG>,
+        block: CONFIG.() -> Unit
+    ) {
+        val config = plugin.createConfig()
+        config.block()  // Run your config ON the config object
+        plugins.add(PluginInfo(plugin.name, config.toString()))
     }
-    
-    /**
-     * Get all installed plugins (for display)
-     */
-    fun getPlugins(): List<String> = plugins
+
+    fun build(): HttpClientConfig = HttpClientConfig(
+        timeout = timeout,
+        baseUrl = baseUrl,
+        plugins = plugins.toList()
+    )
 }
 
-/**
- * PLUGIN CONFIGURATION CLASS
- * ---------------------------
- * 
- * This represents configuration for a single plugin.
- * In real Ktor, each plugin would have its own config class.
- */
-class PluginConfig {
-    var setting: String = "default"
+
+// ============================================
+//  PLUGIN SYSTEM
+// ============================================
+
+//  A PluginFactory knows:
+//    - Its name
+//    - How to create its configuration object
+interface PluginFactory<CONFIG> {
+    val name: String
+    fun createConfig(): CONFIG
 }
 
-/**
- * HTTP CLIENT BUILDER FUNCTION
- * -----------------------------
- * 
- * This is the main entry point, similar to Ktor's HttpClient { }.
- * 
- * fun HttpClient(configure: HttpClientConfig.() -> Unit): String
- *                    ^
- *                    |
- *            Lambda with receiver
- * 
- * USAGE:
- * ------
- * val client = HttpClient {
- *     expectSuccess = false
- *     install("Logging") { ... }
- * }
- * 
- * HOW IT WORKS:
- * -------------
- * 1. Create HttpClientConfig
- * 2. Run the configuration lambda on it
- * 3. Inside the lambda, you can set properties and call methods
- * 4. Return configured client (or in real Ktor, an actual HttpClient instance)
- */
-fun HttpClient(configure: HttpClientConfig.() -> Unit): String {
-    val config = HttpClientConfig()
-    config.configure()  // Configure the client
-    
-    val pluginsInfo = config.getPlugins().joinToString(", ")
-    return "Client created with expectSuccess=${config.expectSuccess}, plugins=[$pluginsInfo]"
+//  Each plugin defines its own config class
+//  and a companion object as the factory.
+
+// --- JSON Plugin ---
+class JsonConfig {
+    var prettyPrint: Boolean = false
+    var strictMode: Boolean = true
+    override fun toString() = "prettyPrint=$prettyPrint, strict=$strictMode"
 }
 
-/**
- * ============================================
- * REAL KTOR EXAMPLES
- * ============================================
- * 
- * 1. HTTP CLIENT:
- *    val client = HttpClient(CIO) {
- *        install(Logging) {
- *            level = LogLevel.INFO
- *        }
- *        install(Json) {
- *            serializer = KotlinxSerializationJson()
- *        }
- *    }
- * 
- * 2. SERVER ROUTING:
- *    embeddedServer(Netty, port = 8080) {
- *        routing {
- *            get("/") {
- *                call.respondText("Hello")
- *            }
- *        }
- *    }
- * 
- * 3. CLIENT REQUEST:
- *    val response = client.get("https://api.example.com/data")
- * 
- * ============================================
- * KEY CONCEPTS
- * ============================================
- * 
- * 1. BUILDER PATTERN: Configure objects using lambdas
- * 2. NESTED DSLS: DSLs within DSLs (install { })
- * 3. PLUGIN SYSTEM: Extensible architecture
- * 4. TYPE SAFETY: Compile-time checking
- * 5. READABILITY: Code reads like configuration
- * 
- * BENEFITS:
- * ---------
- * - Intuitive API
- * - Type-safe configuration
- * - IDE autocomplete support
- * - Extensible (easy to add plugins)
- * - Kotlin-idiomatic code
- */
+object JsonPlugin : PluginFactory<JsonConfig> {
+    override val name = "JSON"
+    override fun createConfig() = JsonConfig()
+}
 
+// --- Logging Plugin ---
+class LoggingConfig {
+    var level: LogLevel = LogLevel.NONE
+    var logBody: Boolean = false
+    override fun toString() = "level=$level, logBody=$logBody"
+}
+
+object LoggingPlugin : PluginFactory<LoggingConfig> {
+    override val name = "Logging"
+    override fun createConfig() = LoggingConfig()
+}
+
+enum class LogLevel { NONE, INFO, HEADERS, ALL }
+
+
+// ============================================
+//  RESULT
+// ============================================
+
+data class PluginInfo(val name: String, val config: String)
+
+data class HttpClientConfig(
+    val timeout: Long,
+    val baseUrl: String,
+    val plugins: List<PluginInfo>
+) {
+    override fun toString(): String {
+        val pluginStr = plugins.joinToString("\n") { "    📦 ${it.name}: ${it.config}" }
+        return """
+            |🌐 HTTP Client:
+            |   Base URL: $baseUrl
+            |   Timeout:  ${timeout}ms
+            |   Plugins:
+            |$pluginStr
+        """.trimMargin()
+    }
+}
+
+
+// ============================================
+//  "BUT WAIT..." — COMMON QUESTIONS
+// ============================================
+//
+//  Q: "What's the companion object doing? Why is JsonPlugin an 'object'?"
+//
+//  A: 'object' = singleton. There's only ONE JsonPlugin.
+//     You don't create it — it just exists.
+//     install(JsonPlugin) passes this singleton as a parameter.
+//     JsonPlugin knows how to create a JsonConfig().
+//     It's a FACTORY: "I know how to make my own config."
+//
+//
+//  Q: "How does install() know which config type to use?"
+//
+//  A: Generics! The function signature is:
+//       fun <CONFIG> install(plugin: PluginFactory<CONFIG>, block: CONFIG.() -> Unit)
+//
+//     When you write install(JsonPlugin) { ... }:
+//       JsonPlugin is PluginFactory<JsonConfig>
+//       So CONFIG = JsonConfig
+//       So block: JsonConfig.() -> Unit
+//       Inside the block, 'this' is a JsonConfig!
+//
+//     The compiler figures out CONFIG automatically from the plugin.
+//
+//
+//  Q: "Is this how real Ktor works?"
+//
+//  A: Very similar! Real Ktor is more complex (uses coroutines,
+//     has a pipeline system, etc.), but the DSL pattern is the same:
+//     Builder + Lambda with receiver + Plugin factory.

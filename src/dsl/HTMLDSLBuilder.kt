@@ -1,223 +1,173 @@
 package dsl
 
-/**
- * ============================================
- * KOTLIN CONCEPT: HTML DSL BUILDER
- * ============================================
- * 
- * This demonstrates building HTML using a type-safe DSL.
- * Instead of concatenating strings, you build HTML structure
- * using Kotlin code that looks like HTML.
- * 
- * COMPARISON:
- * -----------
- * String concatenation:
- *   "<html><body>Hello!</body></html>"
- * 
- * DSL approach:
- *   html {
- *       body {
- *           text("Hello!")
- *       }
- *   }
- * 
- * BENEFITS:
- * ---------
- * 1. Type safety (compiler catches errors)
- * 2. Structure is clear
- * 3. Can use loops, conditionals
- * 4. IDE autocomplete support
- */
+// ============================================
+//  KOTLIN CONCEPT: HTML DSL BUILDER
+// ============================================
+//
+//  Building HTML with strings is ugly and error-prone:
+//
+//    val html = "<html><body><h1>Title</h1><p>Text</p></body></html>"
+//
+//  Problems:
+//    - No structure (everything on one line)
+//    - Easy to forget closing tags (</p>)
+//    - No IDE help (it's just a String)
+//    - Hard to read and maintain
+//
+//  A DSL fixes all of this:
+//
+//    html {
+//        body {
+//            text("h1", "Title")
+//            text("p", "This is a paragraph")
+//        }
+//    }
+//
+//  Same HTML, but:
+//    ✅ Clear structure (nesting shows hierarchy)
+//    ✅ Can't forget closing tags (they're automatic)
+//    ✅ IDE autocompletion (it's real Kotlin code!)
+//    ✅ Easy to read (looks like HTML itself)
 
 fun main() {
+
     // ============================================
-    // BUILDING HTML WITH DSL
+    //  STEP 1: BUILD HTML WITH OUR DSL
     // ============================================
-    
-    val html1 = html {
+
+    val page = html {
         body {
-            text("Hello!")
+            text("h1", "Welcome!")
+            text("p", "This is a Kotlin-generated HTML page.")
+            text("p", "Built with a type-safe DSL builder.")
         }
     }
-    
-    println("Generated HTML:")
-    println(html1)
-    println()
-    
+
+    println(page)
+    // Output:
+    // <html>
+    //   <body>
+    //     <h1>Welcome!</h1>
+    //     <p>This is a Kotlin-generated HTML page.</p>
+    //     <p>Built with a type-safe DSL builder.</p>
+    //   </body>
+    // </html>
+
+
+
     // ============================================
-    // MORE COMPLEX EXAMPLE
+    //  STEP 2: HOW IT WORKS
     // ============================================
-    // You could extend this to support:
-    // - Attributes: body { id = "main"; class = "container" }
-    // - Nested elements: body { div { text("Nested") } }
-    // - Loops: body { for (item in items) { div { text(item) } } }
+    //
+    //  html { ... }
+    //    → Creates an HtmlBuilder
+    //    → Runs { ... } with HtmlBuilder as receiver
+    //    → 'this' = HtmlBuilder inside the block
+    //
+    //  body { ... }
+    //    → Called on HtmlBuilder (because 'this' is HtmlBuilder)
+    //    → Creates a BodyBuilder
+    //    → Runs { ... } with BodyBuilder as receiver
+    //    → Now 'this' = BodyBuilder
+    //
+    //  text("h1", "Welcome!")
+    //    → Called on BodyBuilder
+    //    → Adds a <h1>Welcome!</h1> element
+    //
+    //  Each { } block shifts 'this' to a NEW builder object.
+    //  That's how nesting works in DSLs.
 }
 
-/**
- * BODY BUILDER CLASS
- * ------------------
- * 
- * This class builds the content inside <body> tags.
- * It accumulates content and provides methods to add elements.
- */
-class BodyBuilder() {
-    val content = StringBuilder()
-    
-    /**
-     * Add text content to the body
-     * 
-     * @param body The text to add
-     */
-    fun text(body: String) {
-        content.append(body)
-    }
-    
-    /**
-     * Build the final HTML string
-     * This would be called when the body block completes
-     */
-    fun build(): String = content.toString()
-}
 
-/**
- * HTML BUILDER CLASS
- * ------------------
- * 
- * This is the main builder for HTML structure.
- * It manages the overall HTML document and provides
- * methods to add top-level elements like <body>.
- */
-class HtmlBuilder {
-    val content = StringBuilder()
-    
-    /**
-     * NESTED DSL: BODY ELEMENT
-     * -------------------------
-     * 
-     * This demonstrates nested DSL structure:
-     * html {
-     *     body { ... }  ← This is the nested DSL
-     * }
-     * 
-     * HOW IT WORKS:
-     * 1. Append opening <body> tag
-     * 2. Create BodyBuilder
-     * 3. Run the lambda block on BodyBuilder (configure it)
-     * 4. Get the built content from BodyBuilder
-     * 5. Append closing </body> tag
-     * 
-     * The lambda has BodyBuilder as receiver, so inside { }
-     * you can call BodyBuilder methods like text().
-     */
-    fun body(init: BodyBuilder.() -> Unit) {
-        content.append("<body>")
-        
-        // Create body builder
-        val bodyBuilder = BodyBuilder()
-        
-        // Configure it by running the lambda
-        // Inside the lambda, you can call bodyBuilder.text(), etc.
-        bodyBuilder.init()
-        
-        // Get the built content and append it
-        content.append(bodyBuilder.build())
-        
-        content.append("</body>")
-    }
-    
-    /**
-     * Build the final HTML string
-     */
-    fun build(): String = content.toString()
-}
+// ============================================
+//  DSL ENTRY POINT
+// ============================================
 
-/**
- * TOP-LEVEL HTML BUILDER FUNCTION
- * ---------------------------------
- * 
- * This is the entry point for building HTML.
- * 
- * fun html(init: HtmlBuilder.() -> Unit): String
- *                    ^
- *                    |
- *            Lambda with receiver
- * 
- * USAGE:
- * ------
- * html {
- *     body {
- *         text("Hello")
- *     }
- * }
- * 
- * HOW IT WORKS:
- * -------------
- * 1. Create HtmlBuilder
- * 2. Run the lambda block on it
- * 3. Inside the lambda, you can call htmlBuilder.body { ... }
- * 4. Build and return the HTML string
- */
-fun html(init: HtmlBuilder.() -> Unit): String {
+fun html(block: HtmlBuilder.() -> Unit): String {
     val builder = HtmlBuilder()
-    builder.init()  // Configure the builder
-    return "<html>${builder.build()}</html>"
+    builder.block()
+    return builder.build()
 }
 
-/**
- * ============================================
- * EXTENDING THE DSL
- * ============================================
- * 
- * You could extend this to support more features:
- * 
- * 1. ATTRIBUTES:
- *    body {
- *        id = "main"
- *        class = "container"
- *    }
- * 
- * 2. MORE ELEMENTS:
- *    html {
- *        head {
- *            title("My Page")
- *        }
- *        body {
- *            div { text("Content") }
- *        }
- *    }
- * 
- * 3. CONDITIONALS:
- *    body {
- *        if (showHeader) {
- *            h1 { text("Header") }
- *        }
- *    }
- * 
- * 4. LOOPS:
- *    body {
- *        for (item in items) {
- *            div { text(item) }
- *        }
- *    }
- * 
- * ============================================
- * REAL-WORLD EXAMPLE: KOTLINX.HTML
- * ============================================
- * 
- * Kotlin has a library called kotlinx.html that provides
- * a full HTML DSL:
- * 
- * import kotlinx.html.*
- * import kotlinx.html.stream.createHTML
- * 
- * val html = createHTML().html {
- *     head {
- *         title("My Page")
- *     }
- *     body {
- *         h1 { +"Hello" }
- *         p { +"World" }
- *     }
- * }
- */
 
+// ============================================
+//  HTML BUILDER
+// ============================================
+
+class HtmlBuilder {
+    private val children = mutableListOf<String>()
+
+    //  body { ... }
+    //  Creates a BodyBuilder, runs your config,
+    //  collects the output as a child of <html>.
+    fun body(block: BodyBuilder.() -> Unit) {
+        val bodyBuilder = BodyBuilder()
+        bodyBuilder.block()
+        children.add(bodyBuilder.build())
+    }
+
+    fun build(): String {
+        val content = children.joinToString("\n")
+        return "<html>\n$content\n</html>"
+    }
+}
+
+
+// ============================================
+//  BODY BUILDER
+// ============================================
+
+class BodyBuilder {
+    private val elements = mutableListOf<String>()
+
+    //  text("h1", "Welcome!")
+    //  Adds: <h1>Welcome!</h1>
+    fun text(tag: String, content: String) {
+        elements.add("    <$tag>$content</$tag>")
+    }
+
+    fun build(): String {
+        val content = elements.joinToString("\n")
+        return "  <body>\n$content\n  </body>"
+    }
+}
+
+
+// ============================================
+//  "BUT WAIT..." — COMMON QUESTIONS
+// ============================================
+//
+//  Q: "This is simplified. Does real HTML DSL work like this?"
+//
+//  A: Yes! The Kotlin library 'kotlinx.html' works exactly the same way,
+//     but with ALL HTML tags. You can write fully valid HTML like:
+//
+//       html {
+//           head { title { +"My Page" } }
+//           body {
+//               div(classes = "container") {
+//                   h1 { +"Hello" }
+//                   p { +"World" }
+//               }
+//           }
+//       }
+//
+//     Every tag is a function call with a lambda receiver. Same pattern!
+//
+//
+//  Q: "What does the '+' mean in: +\"Hello\"?"
+//
+//  A: It's an operator overload. kotlinx.html overloads the unary +
+//     operator on String to mean "add this text content".
+//     We used text("h1", "Hello") instead for clarity.
+//
+//
+//  Q: "Can I add attributes like class, id, etc.?"
+//
+//  A: Yes! You'd extend the text() function:
+//       fun text(tag: String, content: String, id: String? = null) {
+//           val attrs = if (id != null) " id=\"$id\"" else ""
+//           elements.add("<$tag$attrs>$content</$tag>")
+//       }
+//
+//     Or use a builder for attributes too (DSL within DSL!).
