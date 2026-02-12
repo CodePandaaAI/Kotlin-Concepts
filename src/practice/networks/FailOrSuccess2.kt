@@ -2,22 +2,19 @@ package practice.networks
 
 fun main() {
     // Test 1: Get a User
-    val userResult = getUser(id = 1)
-    when (userResult) {
+    when (val userResult = getUser(id = 1)) {
         is Result.Success -> println("Got user: ${userResult.data.name}")  // data is User
         is Result.Error -> println("Error: ${userResult.message}")
     }
 
     // Test 2: Get a number
-    val numberResult = getNumber(valid = true)
-    when (numberResult) {
+    when (val numberResult = getNumber(valid = true)) {
         is Result.Success -> println("Got number: ${numberResult.data}")  // data is Int
         is Result.Error -> println("Error: ${numberResult.message}")
     }
 
     // Test 3: Failure case
-    val failResult = getUser(id = 999)
-    when (failResult) {
+    when (val failResult = getUser(id = 999)) {
         is Result.Success -> println("Got user: ${failResult.data.name}")
         is Result.Error -> println("Error: ${failResult.message}")
     }

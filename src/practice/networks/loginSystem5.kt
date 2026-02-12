@@ -44,19 +44,19 @@ fun printResult(result: Result<String>) {
 }
 
 interface AuthApi {
-    fun login(userName: String, password: String): Result<EcpUser>
+    fun login(userName: String, password: String): Result<AppUser>
 }
 
 class AuthApiImpl : AuthApi {
     val listOfRegisteredUsers = listOf(
-        EcpUser(id = 1, username = "alice", email = "rishi.com", password = "password123"),
-        EcpUser(id = 2, username = "Gar", email = "gar.com", password = "2025ok"),
-        EcpUser(id = 3, username = "vikas", email = "vikas.com", password = "okYou"),
-        EcpUser(id = 4, username = "Romit", email = "romit.com", password = "ILoveYou"),
-        EcpUser(id = 5, username = "Shubham", email = "brazers.com", password = "Game")
+        AppUser(id = 1, username = "alice", email = "rishi.com", password = "password123"),
+        AppUser(id = 2, username = "Gar", email = "gar.com", password = "2025ok"),
+        AppUser(id = 3, username = "vikas", email = "vikas.com", password = "okYou"),
+        AppUser(id = 4, username = "Romit", email = "romit.com", password = "ILoveYou"),
+        AppUser(id = 5, username = "Shubham", email = "brazers.com", password = "Game")
     )
 
-    override fun login(userName: String, password: String): Result<EcpUser> {
+    override fun login(userName: String, password: String): Result<AppUser> {
         for (user in listOfRegisteredUsers) {
             if (user.username == userName && user.password == password) {
 
@@ -68,7 +68,7 @@ class AuthApiImpl : AuthApi {
 }
 
 class LoginRepository(private val api: AuthApi, private val simpleTokenStorage: SimpleTokenStorage) {
-    private var currentLoggedInUser: EcpUser? = null
+    private var currentLoggedInUser: AppUser? = null
 
     fun login(username: String, password: String): Result<String> {
         currentLoggedInUser?.let { return Result.Success("Success! Welcome ${it.username}") }
@@ -121,4 +121,4 @@ class SimpleTokenStorageImpl : SimpleTokenStorage {
     }
 }
 
-data class EcpUser(val id: Int? = null, val username: String, val email: String? = null, val password: String? = null)
+data class AppUser(val id: Int? = null, val username: String, val email: String? = null, val password: String? = null)

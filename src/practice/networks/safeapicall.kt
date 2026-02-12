@@ -2,13 +2,13 @@ package practice.networks
 
 fun main() {
     // Now it can return different types!
-    val stringResult: ResultO<String> = safeApiCall { fakeStringApi() }
+    val stringResult: Result<String> = safeApiCall { fakeStringApi() }
     println(stringResult)
 
-    val userResult: ResultO<UserO> = safeApiCall { fakeUserApi() }
+    val userResult: Result<UserO> = safeApiCall { fakeUserApi() }
     println(userResult)
 
-    val intResult: ResultO<Int> = safeApiCall { fakeIntApi() }
+    val intResult: Result<Int> = safeApiCall { fakeIntApi() }
     println(intResult)
 }
 
@@ -20,21 +20,16 @@ fun fakeUserApi(): FakeResponse<UserO> = FakeResponse(200, UserO("Alice"))
 fun fakeIntApi(): FakeResponse<Int> = FakeResponse(200, 42)
 
 // Generic version - T can be String, User, Int, anything!
-fun <T> safeApiCall(apiCall: () -> FakeResponse<T>): ResultO<T> {
+fun <T> safeApiCall(apiCall: () -> FakeResponse<T>): Result<T> {
     return try {
         val response = apiCall()
 
         if (response.status in 200..299) {
-            ResultO.Success(response.body)  // body is type T
+            Result.Success(response.body)  // body is type T
         } else {
-            ResultO.Error("HTTP ${response.status}")
+            Result.Error("HTTP ${response.status}")
         }
     } catch (e: Exception) {
-        ResultO.Error("Exception: ${e.message}")
+        Result.Error("Exception: ${e.message}")
     }
-}
-
-sealed interface ResultO<out T> {
-    data class Success<T>(val data: T) : ResultO<T>
-    data class Error(val message: String) : ResultO<Nothing>
 }
