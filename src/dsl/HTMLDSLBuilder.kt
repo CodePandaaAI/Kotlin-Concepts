@@ -27,17 +27,16 @@ fun html(block: HtmlBuilder.() -> Unit): String {
 }
 
 class HtmlBuilder {
-    private val children = mutableListOf<String>()
+    private var children = ""
 
     fun body(block: BodyBuilder.() -> Unit) {
         val bodyBuilder = BodyBuilder()
         bodyBuilder.block()
-        children.add(bodyBuilder.build())
+        children = bodyBuilder.build()
     }
 
     fun build(): String {
-        val content = children.joinToString("\n")
-        return "<html>\n$content\n</html>"
+        return "<html>\n${children}\n</html>"
     }
 }
 

@@ -8,7 +8,7 @@ package dsl
 
 fun main() {
 
-    val myPhone = configurePhone {
+    val myPhone = phone {
         model = PhoneModel.FIND_X9_PRO
         color = PhoneColor.MIDNIGHT_BLACK
         storage = StorageSize.GB_256
@@ -19,7 +19,7 @@ fun main() {
     }
     println(myPhone)
 
-    val budgetPhone = configurePhone {
+    val budgetPhone = phone {
         model = PhoneModel.RENO_12
         color = PhoneColor.OCEAN_BLUE
         storage = StorageSize.GB_128
@@ -81,7 +81,7 @@ class AccessoryBuilder {
     fun getAll(): List<Accessory> = list
 }
 
-fun configurePhone(block: PhoneConfig.() -> Unit): PhoneConfig {
+fun phone(block: PhoneConfig.() -> Unit): PhoneConfig {
     val config = PhoneConfig()
     config.block()
     return config

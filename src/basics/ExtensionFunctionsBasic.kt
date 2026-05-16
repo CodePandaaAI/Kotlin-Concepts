@@ -12,13 +12,13 @@ fun main() {
     val text = "hello"
 
     // Normal function — argument first
-    println(shout(text))  // HELLO!!!
+    println(shoutNormal(text))  // HELLO!!!
 
     // Extension — reads like a method on the string
     println(text.shout())  // HELLO!!!
 
-    println(5.isEven())    // true
-    println(7.isEven())    // false
+    println(5.isEven())    // false
+    println(8.isEven())    // true
 
     val numbers = listOf(1, 2, 3, 4, 5)
     println(numbers.secondOrNull())  // 2
@@ -30,7 +30,7 @@ fun main() {
     println("Alice".orDefault("Unknown"))  // Alice
 }
 
-fun shout(s: String): String = s.uppercase() + "!!!"
+fun shoutNormal(s: String): String = s.uppercase() + "!!!"
 
 // fun <ReceiverType>.methodName(...): ReturnType
 // `this` = the value before the dot
