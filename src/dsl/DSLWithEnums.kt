@@ -1,32 +1,12 @@
 package dsl
 
-// ============================================
-//  KOTLIN CONCEPT: DSL WITH ENUMS
-// ============================================
+// KOTLIN CONCEPT: DSL + Enums
 //
-//  DSLs let you write configuration-like code.
-//  But what if someone writes:
+// DSL fields use enums instead of String — invalid options fail at compile time, not runtime.
 //
-//    choosePhone {
-//        model = "iPhone 47 Ultra Pro Max Plus"  // ← Not a real model!
-//        color = "rainbow sparkle"               // ← Not a real color!
-//    }
-//
-//  With Strings, ANYTHING goes. No compiler safety.
-//  With ENUMS, only VALID options compile:
-//
-//    choosePhone {
-//        model = PhoneModel.FIND_X9_PRO         // ✅ Must pick from the enum
-//        color = PhoneColor.MIDNIGHT_BLACK       // ✅ Must pick from the enum
-//    }
-//
-//  Enums + DSLs = type-safe configuration.
+// Prerequisite: DSLBuilderPattern.kt
 
 fun main() {
-
-    // ============================================
-    //  STEP 1: TYPE-SAFE PHONE CONFIGURATION
-    // ============================================
 
     val myPhone = configurePhone {
         model = PhoneModel.FIND_X9_PRO
@@ -37,42 +17,15 @@ fun main() {
             add(Accessory.SCREEN_PROTECTOR)
         }
     }
-
     println(myPhone)
-
-    // Try changing PhoneModel to something that doesn't exist:
-    //   model = PhoneModel.GALAXY_S99  // ❌ COMPILE ERROR!
-    //   model = "My Dream Phone"        // ❌ COMPILE ERROR! (wrong type)
-    //
-    // Only the options in the enum are allowed. Safe!
-
-
-
-    // ============================================
-    //  STEP 2: ANOTHER CONFIGURATION
-    // ============================================
 
     val budgetPhone = configurePhone {
         model = PhoneModel.RENO_12
         color = PhoneColor.OCEAN_BLUE
         storage = StorageSize.GB_128
-        // No accessories — keep it simple
     }
-
     println(budgetPhone)
 }
-
-
-// ============================================
-//  ENUMS: THE VALID OPTIONS
-// ============================================
-//
-//  Enums are a FIXED SET of options:
-//    "These are the ONLY valid values. Nothing else."
-//
-//  Like a dropdown menu vs a text field:
-//    Dropdown: [Option 1] [Option 2] [Option 3]  ← can't type random stuff
-//    Text field: [______________]                 ← can type anything
 
 enum class PhoneModel(val displayName: String) {
     FIND_X9("Find X9"),
@@ -97,11 +50,6 @@ enum class StorageSize(val gb: Int) {
 enum class Accessory {
     CASE, SCREEN_PROTECTOR, CHARGER, EARBUDS
 }
-
-
-// ============================================
-//  BUILDER CLASS
-// ============================================
 
 class PhoneConfig {
     var model: PhoneModel = PhoneModel.FIND_X9
@@ -133,45 +81,8 @@ class AccessoryBuilder {
     fun getAll(): List<Accessory> = list
 }
 
-
-// ============================================
-//  DSL ENTRY POINT
-// ============================================
-//
-//  Same pattern as makeSandwich:
-//    1. Create empty config
-//    2. Run the lambda ON it (lambda with receiver)
-//    3. Return the configured object
-
 fun configurePhone(block: PhoneConfig.() -> Unit): PhoneConfig {
     val config = PhoneConfig()
     config.block()
     return config
 }
-
-
-// ============================================
-//  "BUT WAIT..." — COMMON QUESTIONS
-// ============================================
-//
-//  Q: "Why not just use Strings with validation?"
-//
-//  A: With Strings, errors happen at RUNTIME (crashes in production).
-//     With Enums, errors happen at COMPILE TIME (red squiggles in your IDE).
-//     Compile-time > runtime, always.
-//
-//
-//  Q: "Can enums have methods and properties?"
-//
-//  A: Yes! Each enum value can have data:
-//       enum class PhoneModel(val displayName: String) {
-//           FIND_X9_PRO("Find X9 Pro")  ← displayName = "Find X9 Pro"
-//       }
-//     You can also add methods to the enum class itself.
-//
-//
-//  Q: "What if I need to add new options later?"
-//
-//  A: Just add them to the enum. Existing code keeps working.
-//     If you use 'when' on the enum, the compiler will warn you
-//     about unhandled new values (if it's exhaustive).

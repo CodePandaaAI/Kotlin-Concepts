@@ -1,6 +1,6 @@
 # 🧠 Kotlin Concepts
 
-> **Learn Kotlin by reading and running real code.** Every file is a standalone lesson with detailed explanations, runnable examples, and "why" behind every concept.
+> **Learn Kotlin by reading and running real code.** Each file teaches one concept with a short header and runnable `main()` — open, read, run.
 
 ---
 
@@ -8,7 +8,7 @@
 
 1. **Pick a topic** from the table below
 2. **Open the file** in IntelliJ IDEA
-3. **Read the comments** — they explain everything step by step
+3. **Read the header comment** — what this file teaches and what to know first
 4. **Run `main()`** to see the concepts in action
 5. **Experiment!** Change values, break things, learn from errors
 
@@ -80,9 +80,10 @@ Each section builds on the previous one. The DSL section especially relies on un
 Want to add a concept? Follow these rules:
 1. **One concept per file** — keep it focused
 2. **Every file must have `main()`** — runnable out of the box
-3. **Comments explain WHY, not just WHAT** — teach the reasoning
-4. **Include examples** — show the concept in action
-5. **Add to the table above** — so others can find your work
+3. **Header comment** — one concept only: what it is, why it exists, prerequisites (3–8 lines max)
+4. **Code is the lesson** — short inline comments only where the line is not obvious
+5. **No FAQ walls** — if it needs a separate file, split the concept
+6. **Add to the table above** — so others can find your work
 
 ---
 
